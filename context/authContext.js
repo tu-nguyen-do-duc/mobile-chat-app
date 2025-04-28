@@ -29,7 +29,7 @@ export const AuthContextProvider = ({ children }) => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             let data = docSnap.data();
-            setUser({...user, username: data.username, profileUrl: data.profileUrl});
+            setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId});
         } else {
             console.log("No such document!");
         }
