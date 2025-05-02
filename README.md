@@ -1,4 +1,4 @@
-Real-time mobile chat application using React Native and Expo. The UI is built with NativeWind (Tailwind CSS for React Native). Firebase Firestore is used for the backend to handle real-time messaging and user data storage.
+Real-time mobile chat application using React Native and Expo. The UI is built with NativeWind (Tailwind CSS for React Native). Firebase Firestore is used for the backend to handle real-time messaging and user data storage. Source: https://www.youtube.com/watch?v=wncM96HYcxw&t=1702s
 
 Features:
 - user authentication with Firebase
@@ -7,3 +7,4 @@ Features:
 - profile picture
 - message timestamps
 - modern and responsive design
+- push notification
