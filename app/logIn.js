@@ -27,11 +27,9 @@ export default function logIn() {
     setLoading(true);
     let response = await login(emailRef.current, passwordRef.current);
     setLoading(false);
-    console.log('got result: ', response);
     if(!response.success) {
       Alert.alert("Log In", response.msg);
     }
-    // Login proccess
   }
   return (
     <CustomKeyboardView>

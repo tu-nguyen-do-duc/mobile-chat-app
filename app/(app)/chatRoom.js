@@ -7,9 +7,10 @@ import MessageList from '../../components/MessageList';
 import { Feather } from '@expo/vector-icons';
 import CustomKeyboardView from '../../components/CustomKeyboardView';
 import { useAuth } from '../../context/authContext';
-import { addDoc, collection, doc, onSnapshot, orderBy, query, setDoc, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebaseConfiguration';
 import { getRoomId } from '../../utils/common';
+import { sendPushNotification } from '../../utils/notifications';
 
 export default function ChatRoom() {
     const item = useLocalSearchParams();
@@ -72,6 +73,8 @@ export default function ChatRoom() {
             const messageRef = collection(docRef, 'messages');
             texRef.current = '';
             if(inputRef) inputRef?.current?.clear();
+
+            // Send the message
             const newDoc = await addDoc(messageRef, {
                 userId: user?.userId,
                 text: message,
@@ -80,11 +83,22 @@ export default function ChatRoom() {
                 createdAt: Timestamp.fromDate(new Date()),
             });
 
+            // Get recipient's push token and send notification
+            const recipientDoc = await getDoc(doc(db, 'users', item?.userId));
+            const recipientData = recipientDoc.data();
+            
+            if (recipientData?.pushToken) {
+                await sendPushNotification(
+                    recipientData.pushToken,
+                    user?.username,
+                    message
+                );
+            }
+
         }catch (error) {
             Alert.alert('Error', 'Something went wrong. Please try again later.');
         }
     }
-
 
   return (
     <CustomKeyboardView inChat={true}>

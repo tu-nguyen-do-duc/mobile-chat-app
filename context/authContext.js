@@ -1,8 +1,9 @@
 import { createContext, useEffect, useState, useContext } from "react";
 import { auth } from "../firebaseConfiguration";
 import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfiguration";
+import { registerForPushNotificationsAsync } from "../utils/notifications";
 
 export const AuthContext = createContext();
 
@@ -29,9 +30,13 @@ export const AuthContextProvider = ({ children }) => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             let data = docSnap.data();
-            setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId});
-        } else {
-            console.log("No such document!");
+            setUser({...user, username: data.username, profileUrl: data.profileUrl, userId: data.userId, pushToken: data.pushToken});
+            
+            // Update push token if needed
+            const token = await registerForPushNotificationsAsync();
+            if (token && token !== data.pushToken) {
+                await updateDoc(docRef, { pushToken: token });
+            }
         }
     }
 
@@ -41,7 +46,11 @@ export const AuthContextProvider = ({ children }) => {
             return {success: true};
         }catch(e) {
             let msg = e.message;
-            if(msg.includes('(auth/invalid-credential)')) msg='Wrong credentials!';
+            if(msg.includes('auth/invalid-credential')) msg='Wrong credentials!';
+            if(msg.includes('auth/invalid-email')) msg='Invalid email format!';
+            if(msg.includes('auth/user-disabled')) msg='This account has been disabled';
+            if(msg.includes('auth/user-not-found')) msg='No account found with this email';
+            if(msg.includes('auth/network-request-failed')) msg='Network error - check your connection';
             return {success: false, msg};
         }
     }
@@ -58,15 +67,13 @@ export const AuthContextProvider = ({ children }) => {
     const register = async (email, password, username, profileUrl) => {
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
-            console.log('response.user :', response?.user);
-
-            // setUser(response?.user);
-            // setIsAuthenticated(true);
-
+            const token = await registerForPushNotificationsAsync();
+            
             await setDoc(doc(db, "users", response?.user?.uid), {
                 userId: response?.user?.uid,
                 username,
                 profileUrl,
+                pushToken: token
             });
             return {success: true, data: response?.user};
         }catch(e) {
